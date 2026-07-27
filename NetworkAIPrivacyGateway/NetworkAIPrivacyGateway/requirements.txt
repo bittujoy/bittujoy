@@ -1,0 +1,7 @@
+streamlit
+openai
+requests
+pydantic
+pydantic-settings
+python-dotenv
+pytest
