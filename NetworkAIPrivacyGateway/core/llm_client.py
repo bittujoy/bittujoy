@@ -18,10 +18,12 @@ class LLMResponse:
 
 
 class LLMClient(ABC):
-    def __init__(self, server_url: str, model_name: str, api_key: str) -> None:
+    def __init__(self, server_url: str, model_name: str, api_key: str, auth_header: str = "Authorization", auth_prefix: str = "Bearer") -> None:
         self.server_url = server_url.rstrip("/")
         self.model_name = model_name
         self.api_key = api_key
+        self.auth_header = auth_header.strip() or "Authorization"
+        self.auth_prefix = auth_prefix.strip()
 
     @abstractmethod
     def connect(self) -> bool:
@@ -36,7 +38,7 @@ class OpenAIClient(LLMClient):
     def connect(self) -> bool:
         url = f"{self.server_url}/v1/models/{self.model_name}"
         headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            self.auth_header: self._build_auth_value(),
             "Content-Type": "application/json",
         }
         response = requests.get(url, headers=headers, timeout=10)
@@ -45,7 +47,7 @@ class OpenAIClient(LLMClient):
     def analyze(self, prompt: str) -> LLMResponse:
         url = f"{self.server_url}/v1/chat/completions"
         headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            self.auth_header: self._build_auth_value(),
             "Content-Type": "application/json",
         }
         payload = {
@@ -66,10 +68,18 @@ class OpenAIClient(LLMClient):
         return LLMResponse(raw_response=message.strip(), latency_seconds=latency, provider="OpenAI")
 
 
+    def _build_auth_value(self) -> str:
+        if not self.api_key:
+            return ""
+        if self.auth_prefix:
+            return f"{self.auth_prefix} {self.api_key}".strip()
+        return self.api_key
+
+
 class OllamaClient(LLMClient):
     def connect(self) -> bool:
         url = f"{self.server_url}/models/{self.model_name}"
-        headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
+        headers = {self.auth_header: self._build_auth_value()} if self.api_key else {}
         response = requests.get(url, headers=headers, timeout=10)
         return response.status_code == 200
 
@@ -77,7 +87,7 @@ class OllamaClient(LLMClient):
         url = f"{self.server_url}/api/models/{self.model_name}/generate"
         headers = {"Content-Type": "application/json"}
         if self.api_key:
-            headers["Authorization"] = f"Bearer {self.api_key}"
+            headers[self.auth_header] = self._build_auth_value()
 
         payload = {
             "prompt": prompt,

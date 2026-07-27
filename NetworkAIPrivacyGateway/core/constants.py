@@ -23,6 +23,6 @@ DEFAULT_PROMPT_TEMPLATE = (
 
 RAW_OUTPUT_LABEL = "Raw diagnostic output"
 MASKED_OUTPUT_LABEL = "Masked network diagnostic output"
-PROMPT_LABEL = "LLM prompt"  
-LLM_RESPONSE_LABEL = "LLM response (masked)"
+PROMPT_LABEL = "LLM prompt"
+LLM_RESPONSE_LABEL = "LLM response"
 FINAL_REPORT_LABEL = "Final readable report"
